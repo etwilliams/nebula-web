@@ -1,7 +1,8 @@
 package com.dakuupa.nebula;
 
 import com.dakuupa.nebula.utils.NebulaLogger;
-import com.dakuupa.nebula.utils.WebAppConfig;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -14,12 +15,14 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.Part;
 import org.apache.commons.beanutils.BeanUtils;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 
 /**
  *
@@ -39,14 +42,14 @@ public class ModelMapper {
 
             Type[] types = ModelMapper.getParameterizedTypes(activity);
             if (types != null && types.length > 0) {
-                log( "Model=" + ModelMapper.getParameterizedTypes(activity)[0].getTypeName());
+                log("Model=" + ModelMapper.getParameterizedTypes(activity)[0].getTypeName());
                 ModelMapper.mappings.put(activity.getClass().getCanonicalName(), ModelMapper.getParameterizedTypes(activity)[0].getTypeName());
                 return ModelMapper.getParameterizedTypes(activity)[0].getTypeName();
             }
 
             return null;
         } else {
-            log( "Model from cache=" + modelName);
+            log("Model from cache=" + modelName);
             return modelName;
         }
 
@@ -71,18 +74,35 @@ public class ModelMapper {
 
     public static boolean map(Object obj, HttpServletRequest request) {
 
+        Map<String, String[]> parameterMap = request.getParameterMap();
+
         try {
 
-            BeanUtils.populate(obj, request.getParameterMap());
+            List<String> paramsToRemove = new ArrayList<>();
+            for (Entry<String, String[]> entry : parameterMap.entrySet()) {
+                String name = entry.getKey();
+                //remove 0-length params. The BeanUtils will choke on this
+                if (entry.getValue().length == 0) {
+                    paramsToRemove.add(name);
+                }
+            }
+
+            //remove 0-length params. The BeanUtils will choke on this
+            for (String param : paramsToRemove) {
+                parameterMap.remove(param);
+            }
+
+            BeanUtils.populate(obj, parameterMap);
+
             if (request.getContentType() != null && request.getContentType().contains("multipart/form-data")) {
 
                 Map<String, String> files = new HashMap<>();
 
                 for (Part part : request.getParts()) {
                     if (part.getSubmittedFileName() != null) {
-                        String tempName = System.getProperty("java.io.tmpdir") + generateUUID() + "_nebula_" + part.getSubmittedFileName() + ".tmp";
+                        String tempName = System.getProperty("java.io.tmpdir") + "/" + generateUUID() + "_nebula_" + part.getSubmittedFileName() + ".tmp";
                         writeFile(tempName, part.getInputStream());
-                        log( "Wrote " + part.getName() + " to " + tempName);
+                        log("Wrote " + part.getName() + " to " + tempName);
                         files.put(part.getName(), tempName);
                     }
                 }
@@ -237,8 +257,8 @@ public class ModelMapper {
         String randomUUIDString = uuid.toString().replace("-", "");
         return randomUUIDString;
     }
-    
-    private static void log(String msg){
-        NebulaLogger.info(LOG_TAG,msg);
+
+    private static void log(String msg) {
+        //NebulaLogger.info(LOG_TAG, msg);
     }
 }

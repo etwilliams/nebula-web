@@ -27,7 +27,7 @@ public class Model {
     protected transient boolean returnToListOnUpdate = false;
     //item list
 
-    protected transient List modelList = new ArrayList();
+    protected transient List list = new ArrayList();
     //Messages
 
     private transient List<String> helpMessages = new ArrayList<>();
@@ -90,16 +90,16 @@ public class Model {
         this.returnToListOnAdd = returnToListOnAdd;
     }
 
-    public List getModelList() {
-        return modelList;
+    public List getList() {
+        return list;
     }
 
     public boolean isRequirePermission() {
         return requirePermission;
     }
 
-    public void setModelList(List modelList) {
-        this.modelList = modelList;
+    public void setList(List list) {
+        this.list = list;
     }
 
     public User getUser() {
