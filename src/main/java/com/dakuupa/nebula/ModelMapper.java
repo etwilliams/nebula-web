@@ -138,7 +138,10 @@ public class ModelMapper {
                         }
 
                     } else if (type.getName().equals("java.io.File")) {
-                        field.set(obj, new File(files.get(field.getName())));
+                        String path = files.get(field.getName());
+                        if (path != null) {
+                            field.set(obj, new File(path));
+                        }
                     }
 
                 }
