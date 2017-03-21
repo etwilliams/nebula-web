@@ -39,7 +39,8 @@ public abstract class Activity<M> {
 
     }
 
-    public void preAction() {
+    public boolean preAction() {
+        return true;
     }
 
     public abstract String doAction();
@@ -66,11 +67,13 @@ public abstract class Activity<M> {
 
     public void process() {
         loadModel();
-        preAction();
-        String result = doAction();
-        setHttpStatus(result);
-        postAction(result);
-        complete(result);
+        boolean preOk = preAction();
+        if (preOk) {
+            String result = doAction();
+            setHttpStatus(result);
+            postAction(result);
+            complete(result);
+        }
     }
 
     public M getModel() {
