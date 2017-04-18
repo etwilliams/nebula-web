@@ -95,9 +95,17 @@ public class ModelMapper {
 
                 Map<String, String> files = new HashMap<>();
 
+                File folder = new File(System.getProperty("java.io.tmpdir") + "/" + generateUUID() + "/");
+                System.out.println("Create tmp folder " + folder);
+                if (!folder.exists()) {
+                    folder.mkdir();
+                }
+
                 for (Part part : request.getParts()) {
                     if (part.getSubmittedFileName() != null) {
-                        String tempName = System.getProperty("java.io.tmpdir") + "/" + generateUUID() + "_nebula_" + part.getSubmittedFileName() + ".tmp";
+
+                        String tempName = folder.getAbsolutePath() + "/" + part.getSubmittedFileName();
+                        System.out.println("Create file tmp path " + tempName);
                         writeFile(tempName, part.getInputStream());
                         log("Wrote " + part.getName() + " to " + tempName);
                         files.put(part.getName(), tempName);
