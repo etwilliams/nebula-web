@@ -65,7 +65,7 @@ public class NebulaLogger {
     }
 
     private static void log(String logMessage) {
-        System.out.println(logMessage);
+        //System.out.println(logMessage);
         writeToLogFile(logMessage);
     }
 

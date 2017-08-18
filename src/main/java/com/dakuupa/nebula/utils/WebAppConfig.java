@@ -3,6 +3,7 @@ package com.dakuupa.nebula.utils;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  *
@@ -35,12 +36,15 @@ public class WebAppConfig {
 
         String handlersConf = PropertiesReader.getProperty("handlers");
 
-        for (String hand : Arrays.asList(handlersConf.split(","))) {
-            try {
-                Class clz = Class.forName(WebAppConfig.HANDLER_PATH + "." + hand);
-                HANDLERS.add(clz);
-            } catch (ClassNotFoundException ex) {
-                NebulaLogger.exception(WebAppConfig.class.getSimpleName(), ex);
+        if (StringUtils.isNotEmpty(handlersConf)) {
+            for (String hand : Arrays.asList(handlersConf.split(","))) {
+                NebulaLogger.info(LOG_TAG, "Loading handler " + hand);
+                try {
+                    Class clz = Class.forName(WebAppConfig.HANDLER_PATH + "." + hand);
+                    HANDLERS.add(clz);
+                } catch (ClassNotFoundException ex) {
+                    NebulaLogger.exception(LOG_TAG, ex);
+                }
             }
         }
 
