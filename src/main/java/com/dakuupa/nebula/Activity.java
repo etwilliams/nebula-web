@@ -1,5 +1,7 @@
 package com.dakuupa.nebula;
 
+import com.dakuupa.nebula.utils.NebulaLogger;
+import java.util.List;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.lang3.StringUtils;
 
@@ -67,17 +69,57 @@ public abstract class Activity<M> {
 
     public void process() {
         loadModel();
-        boolean preOk = preAction();
-        if (preOk) {
-            String result = doAction();
-            setHttpStatus(result);
-            postAction(result);
-            complete(result);
+        boolean allowedMethods = handleMethods();
+        if (allowedMethods) {
+            boolean preOk = preAction();
+            if (preOk) {
+                String result = doAction();
+                setHttpStatus(result);
+                postAction(result);
+                complete(result);
+            }
         }
     }
 
     public M getModel() {
         return model;
+    }
+
+    protected boolean handleMethods() {
+        boolean methodAllowed = false;
+        String requestMethod = http.getRequest().getMethod();
+        NebulaLogger.info(Activity.class.getSimpleName(), "Request method: " + http.getRequest().getMethod());
+        List<HTTPMethod> methods = ReflectionHelper.getHTTPMethods(this.getClass());
+        if (methods != null && !methods.isEmpty()) {
+            methodAllowed = false;
+            for (HTTPMethod method : methods) {
+                System.out.println(method.value());
+                if (requestMethod.equals(method.value())) {
+                    methodAllowed = true;
+                    break;
+                }
+            }
+
+        } else {
+            NebulaLogger.info(Activity.class.getSimpleName(), "No specified allowed method for " + this.getClass().getSimpleName());
+            return true;
+        }
+        if (!methodAllowed) {
+            methodNotAllowed(requestMethod, http);
+        }
+        return methodAllowed;
+    }
+
+    protected void methodNotAllowed(String method, HttpWrapper http) {
+        try {
+            http.getResponse().setContentType("text/html");
+            http.getResponse().setStatus(HttpServletResponse.SC_METHOD_NOT_ALLOWED);
+            http.getResponse().getWriter().println("<html><body style='text-align:center; font-family: Sans-Serif'><h1>Error 405</h1>Method " + method + " not allowed");
+            http.getResponse().getWriter().println("</body></html>");
+            http.setOutputFinished(true);
+        } catch (Exception e) {
+
+        }
     }
 
 }

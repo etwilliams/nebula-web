@@ -35,4 +35,9 @@ public class ReflectionHelper {
         return type;
     }
 
+    protected static List<HTTPMethod> getHTTPMethods(Class clazz) {
+        HTTPMethod[] httpMethods = (HTTPMethod[]) clazz.getAnnotationsByType(HTTPMethod.class);
+        return Arrays.asList(httpMethods);
+    }
+
 }

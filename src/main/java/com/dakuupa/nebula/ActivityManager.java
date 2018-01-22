@@ -107,9 +107,9 @@ public class ActivityManager {
         }
         return null;
     }
-    
-    private static void log(String msg){
-        //NebulaLogger.info(LOG_TAG, msg);
+
+    private static void log(String msg) {
+        NebulaLogger.info(LOG_TAG, msg);
     }
 
 }

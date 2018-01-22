@@ -2,9 +2,12 @@ package com.dakuupa.nebula.utils;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -56,12 +59,15 @@ public class NebulaLogger {
 
     private static String getMessage(String tag, String str, Object[] objs) {
         try {
-            SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S");
-            return dateFormatter.format(new Date()) + "\t" + tag + " " + String.format(str, objs);
+            if (str != null) {
+                SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S");
+                return dateFormatter.format(new Date()) + "\t" + tag + " " + String.format(str, objs);
+            }
         } catch (Exception e) {
             exception(tag, e);
             return "ERROR with string " + str;
         }
+        return null;
     }
 
     private static void log(String logMessage) {
@@ -85,6 +91,13 @@ public class NebulaLogger {
 
     public static void setLogFile(File nlogFile) {
         logFile = nlogFile;
+        if (!logFile.exists()) {
+            try {
+                logFile.createNewFile();
+            } catch (IOException ex) {
+                Logger.getLogger(NebulaLogger.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
     }
 
 }

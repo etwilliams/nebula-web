@@ -9,6 +9,8 @@ import static com.dakuupa.nebula.Activity.SUCCESS;
 import static com.dakuupa.nebula.Activity.UPDATE_ACTION;
 import static com.dakuupa.nebula.Activity.UPDATE_RELOAD_ACTION;
 import com.dakuupa.nebula.utils.NebulaLogger;
+import java.util.List;
+import javax.servlet.http.HttpServletResponse;
 
 /**
  *
@@ -19,6 +21,52 @@ public class CrudActivity<T extends Model> extends Activity<T> {
     @Override
     public String doAction() {
         return processForm();
+    }
+
+    @Override
+    protected boolean handleMethods() {
+        boolean methodAllowed = false;
+        String requestMethod = http.getRequest().getMethod();
+
+        NebulaLogger.info(Activity.class.getSimpleName(), "Request method: " + http.getRequest().getMethod());
+        NebulaLogger.info(Activity.class.getSimpleName(), "Request action: " + model.getAction());
+        List<HTTPMethod> methods = ReflectionHelper.getHTTPMethods(this.getClass());
+        if (methods != null && !methods.isEmpty()) {
+            methodAllowed = false;
+            for (HTTPMethod method : methods) {
+                //action specified, methods and actions equal
+                if (requestMethod.equals(method.value()) && model.getAction() != null && model.getAction().equals(method.action())) {
+                    methodAllowed = true;
+                    break;
+                } //action not specified, methods equal
+                else if (model.getAction() == null && requestMethod.equals(method.value())) {
+                    methodAllowed = true;
+                    break;
+                }
+            }
+
+        } else {
+            NebulaLogger.info(Activity.class.getSimpleName(), "No specified allowed method for " + this.getClass().getSimpleName());
+            return true;
+        }
+        if (!methodAllowed) {
+            methodNotAllowed(requestMethod, http);
+        }
+        return methodAllowed;
+    }
+
+    @Override
+    protected void methodNotAllowed(String method, HttpWrapper http) {
+        try {
+            String action = model.getAction() == null ? "--no action--" : model.getAction();
+            http.getResponse().setContentType("text/html");
+            http.getResponse().setStatus(HttpServletResponse.SC_METHOD_NOT_ALLOWED);
+            http.getResponse().getWriter().println("<html><body style='text-align:center; font-family: Sans-Serif'><h1>Error 405</h1>Method " + method + " not allowed for action " + action);
+            http.getResponse().getWriter().println("</body></html>");
+            http.setOutputFinished(true);
+        } catch (Exception e) {
+
+        }
     }
 
     /*
