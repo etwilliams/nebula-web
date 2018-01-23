@@ -27,19 +27,15 @@ public class CrudActivity<T extends Model> extends Activity<T> {
     protected boolean handleMethods() {
         boolean methodAllowed = false;
         String requestMethod = http.getRequest().getMethod();
+        String requestAction = model.getAction() == null ? "" : model.getAction();
 
         NebulaLogger.info(Activity.class.getSimpleName(), "Request method: " + http.getRequest().getMethod());
-        NebulaLogger.info(Activity.class.getSimpleName(), "Request action: " + model.getAction());
+        NebulaLogger.info(Activity.class.getSimpleName(), "Request action: " + requestAction);
         List<HTTPMethod> methods = ReflectionHelper.getHTTPMethods(this.getClass());
         if (methods != null && !methods.isEmpty()) {
             methodAllowed = false;
             for (HTTPMethod method : methods) {
-                //action specified, methods and actions equal
-                if (requestMethod.equals(method.value()) && model.getAction() != null && model.getAction().equals(method.action())) {
-                    methodAllowed = true;
-                    break;
-                } //action not specified, methods equal
-                else if (model.getAction() == null && requestMethod.equals(method.value())) {
+                if (requestMethod.equals(method.value()) && requestAction.equals(method.action())) {
                     methodAllowed = true;
                     break;
                 }
