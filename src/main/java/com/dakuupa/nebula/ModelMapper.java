@@ -6,7 +6,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
@@ -20,6 +22,7 @@ import java.util.logging.Logger;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.Part;
 import org.apache.commons.beanutils.BeanUtils;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  *
@@ -54,8 +57,25 @@ public class ModelMapper {
 
     public static Object getModel(String modelName) {
         try {
-            return Class.forName(modelName).newInstance();
-        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException ex) {
+            log("Creating model " + modelName);
+
+            if (modelName.contains("$")) {
+                log("Model is inner class");
+                log("Parent class is " + StringUtils.substringBefore(modelName, "$"));
+
+                Class<?> parentClass = Class.forName(StringUtils.substringBefore(modelName, "$"));
+                Object parent = parentClass.newInstance();
+
+                Class<?> innerClass = Class.forName(modelName);
+                Constructor<?> ctor = innerClass.getDeclaredConstructor(parentClass);
+
+                return ctor.newInstance(parent);
+
+            } else {
+                return Class.forName(modelName).newInstance();
+            }
+
+        } catch (ClassNotFoundException | InvocationTargetException | InstantiationException | IllegalAccessException | NoSuchMethodException | SecurityException ex) {
             Logger.getLogger(ModelMapper.class.getName()).log(Level.SEVERE, null, ex);
         }
         return null;
@@ -267,6 +287,6 @@ public class ModelMapper {
     }
 
     private static void log(String msg) {
-        //NebulaLogger.info(LOG_TAG, msg);
+        NebulaLogger.info(LOG_TAG, msg);
     }
 }

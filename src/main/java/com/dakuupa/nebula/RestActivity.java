@@ -1,23 +1,24 @@
 package com.dakuupa.nebula;
 
 import static com.dakuupa.nebula.Activity.CREATE_ACTION;
-import static com.dakuupa.nebula.Activity.CREATE_RELOAD_ACTION;
 import static com.dakuupa.nebula.Activity.DELETE_ACTION;
 import static com.dakuupa.nebula.Activity.ERROR;
-import static com.dakuupa.nebula.Activity.LIST_ACTION;
 import static com.dakuupa.nebula.Activity.SUCCESS;
 import static com.dakuupa.nebula.Activity.UPDATE_ACTION;
-import static com.dakuupa.nebula.Activity.UPDATE_RELOAD_ACTION;
 import com.dakuupa.nebula.utils.NebulaLogger;
 import java.util.List;
 import javax.servlet.http.HttpServletResponse;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  *
  * @author etwilliams
  */
-public class CrudActivity<T extends Model> extends Activity<T> {
+public class RestActivity<T extends RestModel> extends Activity<T> {
 
+    public static final String ERROR_NOT_FOUND = "not_found_error";
+    public static final String ERROR_FORBIDDEN = "forbidden_error";
+    
     @Override
     public String doAction() {
         return processForm();
@@ -25,8 +26,28 @@ public class CrudActivity<T extends Model> extends Activity<T> {
 
     @Override
     protected boolean handleMethods() {
-        boolean methodAllowed = false;
+
         String requestMethod = http.getRequest().getMethod();
+
+        String pathInfo = http.getRequest().getPathInfo();
+        String identifier = pathInfo.substring(pathInfo.lastIndexOf('/') + 1);
+        if (StringUtils.isNumeric(identifier)) {
+            model.setId(Integer.parseInt(identifier));
+        } else if (StringUtils.isNotEmpty(identifier) && !StringUtils.equals(identifier, http.getActivityName())) {
+            model.setIdentifier(identifier);
+        }
+
+        if (requestMethod.equalsIgnoreCase("GET")) {
+            model.setAction(READ_ACTION);
+        } else if (requestMethod.equalsIgnoreCase("POST")) {
+            model.setAction(CREATE_ACTION);
+        } else if (requestMethod.equalsIgnoreCase("PUT")) {
+            model.setAction(UPDATE_ACTION);
+        } else if (requestMethod.equalsIgnoreCase("DELETE")) {
+            model.setAction(DELETE_ACTION);
+        }
+
+        boolean methodAllowed = false;
         String requestAction = model.getAction() == null ? "" : model.getAction();
 
         NebulaLogger.info(Activity.class.getSimpleName(), "Request method: " + http.getRequest().getMethod());
@@ -42,7 +63,6 @@ public class CrudActivity<T extends Model> extends Activity<T> {
             }
 
         } else {
-            NebulaLogger.info(Activity.class.getSimpleName(), "No specified allowed method for " + this.getClass().getSimpleName());
             return true;
         }
         if (!methodAllowed) {
@@ -69,85 +89,55 @@ public class CrudActivity<T extends Model> extends Activity<T> {
      * Process CRUD forms (default method)
      */
     protected String processForm() {
+
         if (model.getAction() != null && !model.getAction().equals("")) {
 
-            if (model.getAction().equals(LIST_ACTION)) {
-                try {
-                    list();
-                    return model.getForwardToListResult();
-                } catch (Exception e) {
-                    addErrorMessage("Error listing " + model.getModelDisplayName() + " items");
-                    NebulaLogger.exception("processForm", e);
-                    return ERROR;
-                }
-            } else if (model.getAction().equals(CREATE_RELOAD_ACTION)) {
-                createReload();
-                model.setAction(CREATE_ACTION);
-                return SUCCESS;
-            } else if (model.getAction().equals(UPDATE_RELOAD_ACTION)) {
-                updateReload();
-                model.setAction(UPDATE_ACTION);
-                return SUCCESS;
-            } else if (model.getAction().equals(CREATE_ACTION)) {
+            if (model.getAction().equals(CREATE_ACTION)) {
                 try {
                     if (validateForm()) {
                         int id = create();
                         model.setId(id);
-                        addSuccessMessage("Added " + model.getModelDisplayName());
-                        read();
-                        model.setAction(UPDATE_ACTION);
-                        if (model.isReturnToListOnAdd()) {
-                            list();
-                            model.setAction(LIST_ACTION);
-                            return model.getForwardToListResult();
-                        } else {
+                        if (read()) {
                             return SUCCESS;
+                        } else {
+                            return ERROR;
                         }
                     } else {
                         return ERROR;
                     }
                 } catch (Exception e) {
-                    addErrorMessage("Error adding " + model.getModelDisplayName());
                     NebulaLogger.exception("processForm", e);
                     return ERROR;
                 }
+            } else if (model.getAction().equals(READ_ACTION)) {
+                
+                if (read()){
+                    return SUCCESS;
+                }
+                else{
+                    return ERROR_NOT_FOUND;
+                }
+
             } else if (model.getAction().equals(UPDATE_ACTION)) {
                 try {
-                    if (validateForm()) {
-                        update();
+                    if (validateForm() && update()) {
                         read();
-                        model.setAction(UPDATE_ACTION);
-                        addSuccessMessage("Updated " + model.getModelDisplayName());
-
-                        if (model.isReturnToListOnUpdate()) {
-                            list();
-                            model.setAction(LIST_ACTION);
-                            return model.getForwardToListResult();
-                        } else {
-                            return SUCCESS;
-                        }
-
+                        return SUCCESS;
                     } else {
                         return ERROR;
                     }
                 } catch (Exception e) {
-                    addErrorMessage("Error updating " + model.getModelDisplayName());
                     NebulaLogger.exception("processForm", e);
                     return ERROR;
                 }
-            } else if (model.getAction().equals(DELETE_ACTION) && model.getId() != -1) {
+            } else if (model.getAction().equals(DELETE_ACTION) && model.hasIdentifier()) {
                 try {
                     if (delete()) {
-                        addSuccessMessage("Removed " + model.getModelDisplayName());
-                        model.setAction(LIST_ACTION);
-                        list();
-                        return model.getForwardToListResult();
+                        return SUCCESS;
                     } else {
-                        read();
-                        return ERROR;
+                        return ERROR_NOT_FOUND;
                     }
                 } catch (Exception e) {
-                    addErrorMessage("Error removing " + model.getModelDisplayName());
                     NebulaLogger.exception("processForm", e);
                     return ERROR;
                 }
@@ -155,15 +145,7 @@ public class CrudActivity<T extends Model> extends Activity<T> {
                 return ERROR;
             }
         } else {
-            if (model.getId() != -1) {
-                //reading existing
-                read();
-                model.setAction(UPDATE_ACTION);
-            } else {
-                //adding new
-                model.setAction(CREATE_ACTION);
-            }
-            return SUCCESS;
+            return ERROR;
         }
     }
 
@@ -171,20 +153,16 @@ public class CrudActivity<T extends Model> extends Activity<T> {
         return -1;
     }
 
-    protected void read() {
-
+    protected boolean read() {
+        return true;
     }
 
-    protected void update() {
-
+    protected boolean update() {
+        return true;
     }
 
     protected boolean delete() {
-        return false;
-    }
-
-    protected void list() {
-        //override as needed
+        return true;
     }
 
     //used when page is reloaded when adding a new item
@@ -200,26 +178,6 @@ public class CrudActivity<T extends Model> extends Activity<T> {
     //override to add validation
     protected boolean validateForm() {
         return true;
-    }
-
-    public final void addHelpMessage(String msg) {
-        model.getHelpMessages().add(msg);
-    }
-
-    public final void addSuccessMessage(String msg) {
-        model.getSuccessMessages().add(msg);
-    }
-
-    public final void addInfoMessage(String msg) {
-        model.getInfoMessages().add(msg);
-    }
-
-    public final void addWarningMessage(String msg) {
-        model.getWarningMessages().add(msg);
-    }
-
-    public final void addErrorMessage(String msg) {
-        model.getErrorMessages().add(msg);
     }
 
 }

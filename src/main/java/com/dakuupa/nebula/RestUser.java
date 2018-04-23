@@ -4,25 +4,25 @@ package com.dakuupa.nebula;
  *
  * @author ETWilliams
  */
-public class User {
+public class RestUser {
 
     private String username;
     private String firstName;
     private String middleName;
     private String lastName;
     private String displayName;
-    private boolean allowAccess;
+    private boolean admin;
 
-    public User() {
+    public RestUser() {
     }
 
-    public User(String username, boolean allowAccess) {
+    public RestUser(String username, boolean allowAccess) {
         this.username = username;
-        this.allowAccess = allowAccess;
+        this.admin = allowAccess;
     }
 
-    public boolean isAllowAccess() {
-        return allowAccess;
+    public boolean isAdmin() {
+        return admin;
     }
 
     public String getDisplayName() {

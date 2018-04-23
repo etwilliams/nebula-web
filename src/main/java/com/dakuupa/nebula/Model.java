@@ -10,6 +10,9 @@ import java.util.List;
 public class Model {
 
     protected transient Integer id = null;//-1;
+    
+    protected transient String identifier;
+    
     //action to call (for processForm method)
 
     protected transient String action;
@@ -64,6 +67,14 @@ public class Model {
 
     public void setId(Integer id) {
         this.id = id;
+    }
+
+    public String getIdentifier() {
+        return identifier;
+    }
+
+    public void setIdentifier(String identifier) {
+        this.identifier = identifier;
     }
 
     public String getModelDisplayName() {

@@ -1,5 +1,6 @@
 package com.dakuupa.nebula;
 
+import com.dakuupa.nebula.utils.WebAppConfig;
 import java.io.IOException;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.MultipartConfig;
@@ -11,9 +12,9 @@ import javax.servlet.http.HttpServletResponse;
  *
  * @author etwilliams
  */
-@MultipartConfig(fileSizeThreshold=1024*1024*100, 	// 100 MB 
-                 maxFileSize=1024*1024*100,      	// 100 MB
-                 maxRequestSize=1024*1024*100)   	// 100 MB
+@MultipartConfig(fileSizeThreshold = 1024 * 1024 * 100, // 100 MB 
+        maxFileSize = 1024 * 1024 * 100, // 100 MB
+        maxRequestSize = 1024 * 1024 * 100)   	// 100 MB
 public class ActivityHandlerServlet extends HttpServlet {
 
     /**
@@ -26,7 +27,15 @@ public class ActivityHandlerServlet extends HttpServlet {
      */
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        ActivityManager.performActivity(request, response);
+
+        WebAppConfig config = new WebAppConfig(getInitParameter(WebAppConfig.APP_CONTEXT_PATH),
+                getInitParameter(WebAppConfig.ACTIVITY_PATH),
+                getInitParameter(WebAppConfig.ACTIVITY_PREFIX),
+                getInitParameter(WebAppConfig.ACTIVITY_SUFFIX));
+
+        ActivityManager manager = new ActivityManager(config);
+
+        manager.performActivity(request, response);
     }
 
     /**
@@ -56,6 +65,17 @@ public class ActivityHandlerServlet extends HttpServlet {
             throws ServletException, IOException {
         processRequest(request, response);
     }
+
+    @Override
+    protected void doDelete(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        processRequest(request, response);
+    }
+    
+    @Override
+    protected void doPut(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        processRequest(request, response);
+    }
+    
 
     @Override
     public String getServletInfo() {

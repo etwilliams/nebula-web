@@ -19,6 +19,7 @@ public class HttpWrapper {
     private HttpServletResponse response;
     private String responseString = "";
     private boolean outputFinished;
+    private String activityName;
 
     public HttpWrapper(String url, HttpServletRequest servletRequest, HttpServletResponse servletResponse) {
         this.url = url;
@@ -86,6 +87,14 @@ public class HttpWrapper {
 
     public void setOutputFinished(boolean outputFinished) {
         this.outputFinished = outputFinished;
+    }
+
+    public String getActivityName() {
+        return activityName;
+    }
+
+    public void setActivityName(String activityName) {
+        this.activityName = activityName;
     }
 
 }

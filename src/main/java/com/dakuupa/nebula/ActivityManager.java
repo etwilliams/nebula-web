@@ -18,7 +18,13 @@ public class ActivityManager {
 
     public static final String LOG_TAG = ActivityManager.class.getSimpleName();
 
-    public static boolean performActivity(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
+    private WebAppConfig config;
+
+    public ActivityManager(WebAppConfig config) {
+        this.config = config;
+    }
+
+    public boolean performActivity(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
 
         HttpWrapper http = null;
         String path = request.getRequestURI();
@@ -30,24 +36,35 @@ public class ActivityManager {
         try {
             if (path != null) {
                 http = new HttpWrapper(path, request, response);
-                String[] parts = path.split("/");
-                if (parts != null && parts.length > 0) {
-                    log("Activity=" + WebAppConfig.ACTIVITY_PATH + "." + parts[parts.length - 1]); //part[0] is before initial /
+
+                String activityPath = StringUtils.substringAfter(path, config.getContext());
+
+                String[] parts = activityPath.split("/");
+
+                if (parts != null && parts.length == 2) {
                     activityName = parts[parts.length - 1];
+                } else if (parts != null && parts.length > 1) {
+                    activityName = parts[parts.length - 2];
                 }
+                http.setActivityName(activityName);
+
             }
 
-            if (!StringUtils.isEmpty(WebAppConfig.ACTIVITY_PREFIX)) {
-                activityName = activityName.replace(WebAppConfig.ACTIVITY_PREFIX, "");
+            if (StringUtils.isAllLowerCase(activityName)) {
+                activityName = StringUtils.capitalize(activityName);
             }
 
-            if (!StringUtils.isEmpty(WebAppConfig.ACTIVITY_SUFFIX)) {
-                activityName += WebAppConfig.ACTIVITY_SUFFIX;
+            if (!StringUtils.isEmpty(config.getActivityPrefix())) {
+                activityName = activityName.replace(config.getActivityPrefix(), "");
+            }
+
+            if (!StringUtils.isEmpty(config.getActivitySuffix())) {
+                activityName += config.getActivitySuffix();
             }
 
             if (http != null && activityName != null && !activityName.trim().isEmpty()) {
 
-                Class clz = Class.forName(WebAppConfig.ACTIVITY_PATH + "." + activityName);
+                Class clz = Class.forName(config.getActivityPath() + "." + activityName);
 
                 Object instance = clz.newInstance();
                 if (instance instanceof Activity) {
