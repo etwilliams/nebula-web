@@ -6,12 +6,14 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import static java.lang.Integer.decode;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -19,6 +21,7 @@ import java.util.Map.Entry;
 import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.Part;
 import org.apache.commons.beanutils.BeanUtils;
@@ -107,6 +110,26 @@ public class ModelMapper {
             //remove 0-length params. The BeanUtils will choke on this
             for (String param : paramsToRemove) {
                 parameterMap.remove(param);
+            }
+
+            //handle x-www-form-urlencoded data
+            if (request.getContentType().contains("application/x-www-form-urlencoded")) {
+
+                String data = request.getReader().lines().collect(Collectors.joining(System.lineSeparator()));
+
+                final String[] params = data.split("&");
+                try {
+                    for (final String param : params) {
+                        final String name = param.split("=")[0];
+                        final String value = param.split("=")[1];
+                        String[] valArr = new String[1];
+                        valArr[0] = value;
+                        parameterMap.put(name, valArr);
+                    }
+                } catch (final Exception e) {
+                    e.printStackTrace();
+                }
+
             }
 
             BeanUtils.populate(obj, parameterMap);

@@ -13,6 +13,7 @@ import org.apache.commons.lang3.StringUtils;
 /**
  *
  * @author etwilliams
+ * @param <T>
  */
 public class RestActivity<T extends RestModel> extends Activity<T> {
 
