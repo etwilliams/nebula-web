@@ -113,7 +113,7 @@ public class ModelMapper {
             }
 
             //handle x-www-form-urlencoded data
-            if (request.getContentType().contains("application/x-www-form-urlencoded")) {
+            if (request.getContentType() != null && request.getContentType().contains("application/x-www-form-urlencoded")) {
 
                 String data = request.getReader().lines().collect(Collectors.joining(System.lineSeparator()));
 
