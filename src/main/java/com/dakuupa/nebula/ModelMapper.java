@@ -120,11 +120,22 @@ public class ModelMapper {
                 final String[] params = data.split("&");
                 try {
                     for (final String param : params) {
-                        final String name = param.split("=")[0];
-                        final String value = param.split("=")[1];
+
+                        final String[] arr = param.split("=");
+                        String name = "";
+                        String value = "";
+                        if (arr.length > 0) {
+                            name = param.split("=")[0];
+                            if (arr.length > 1) {
+                                value = param.split("=")[1];
+                            }
+                        }
+
                         String[] valArr = new String[1];
                         valArr[0] = value;
-                        parameterMap.put(name, valArr);
+                        if (!name.isEmpty()) {
+                            parameterMap.put(name, valArr);
+                        }
                     }
                 } catch (final Exception e) {
                     e.printStackTrace();
