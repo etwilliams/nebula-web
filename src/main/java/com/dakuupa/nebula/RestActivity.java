@@ -33,7 +33,7 @@ public class RestActivity<T extends RestModel> extends Activity<T> {
         String pathInfo = http.getRequest().getPathInfo();
         String identifier = pathInfo.substring(pathInfo.lastIndexOf('/') + 1);
         if (StringUtils.isNumeric(identifier)) {
-            model.setId(Integer.parseInt(identifier));
+            model.setId(Long.parseLong(identifier));
         } else if (StringUtils.isNotEmpty(identifier) && !StringUtils.equals(identifier, http.getActivityName())) {
             model.setIdentifier(identifier);
         }
@@ -96,7 +96,7 @@ public class RestActivity<T extends RestModel> extends Activity<T> {
             if (model.getAction().equals(CREATE_ACTION)) {
                 try {
                     if (validateForm()) {
-                        int id = create();
+                        long id = create();
                         model.setId(id);
                         if (read()) {
                             return SUCCESS;
@@ -150,7 +150,7 @@ public class RestActivity<T extends RestModel> extends Activity<T> {
         }
     }
 
-    protected int create() {
+    protected long create() {
         return -1;
     }
 

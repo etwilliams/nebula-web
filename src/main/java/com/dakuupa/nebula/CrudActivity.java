@@ -91,7 +91,7 @@ public class CrudActivity<T extends Model> extends Activity<T> {
             } else if (model.getAction().equals(CREATE_ACTION)) {
                 try {
                     if (validateForm()) {
-                        int id = create();
+                        long id = create();
                         model.setId(id);
                         addSuccessMessage("Added " + model.getModelDisplayName());
                         read();
@@ -167,7 +167,7 @@ public class CrudActivity<T extends Model> extends Activity<T> {
         }
     }
 
-    protected int create() {
+    protected long create() {
         return -1;
     }
 

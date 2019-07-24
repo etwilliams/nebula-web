@@ -10,7 +10,7 @@ import org.apache.commons.lang3.StringUtils;
  */
 public class RestModel {
 
-    protected transient Integer id = null;
+    protected transient Long id = null;
 
     protected transient String identifier;
 
@@ -29,11 +29,11 @@ public class RestModel {
         return (getId() != null && getId() != -1) || StringUtils.isNotEmpty(getIdentifier());
     }
 
-    public Integer getId() {
+    public Long getId() {
         return id;
     }
 
-    public void setId(Integer id) {
+    public void setId(Long id) {
         this.id = id;
     }
 

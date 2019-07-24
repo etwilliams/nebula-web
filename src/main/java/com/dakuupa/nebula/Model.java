@@ -9,7 +9,7 @@ import java.util.List;
  */
 public class Model {
 
-    protected transient Integer id = null;//-1;
+    protected transient Long id = null;//-1;
     
     protected transient String identifier;
     
@@ -61,11 +61,11 @@ public class Model {
         this.returnToListOnUpdate = returnToListOnUpdate;
     }
 
-    public Integer getId() {
+    public Long getId() {
         return id;
     }
 
-    public void setId(Integer id) {
+    public void setId(Long id) {
         this.id = id;
     }
 
